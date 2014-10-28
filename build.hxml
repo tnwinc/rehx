@@ -1,0 +1,20 @@
+-main TestMain
+-lib buddy
+-lib promhx
+
+-cp src
+-cp test
+
+-neko build/TestMain.n
+
+--next
+
+# display completions
+-main TestMain
+-lib buddy
+-lib promhx
+
+-cp src
+-cp test
+
+-swf build/TestMain.swf
