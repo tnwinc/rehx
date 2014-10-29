@@ -1,41 +1,14 @@
-# Haxe rest-client
-A REST-ish wrapper around Haxe's built-in HTTP functionality
+# rehx
+Another REST-ish client for Haxe. This one gives you instances, promises, and solves some content negotiation problems.
 
-## Motivation
-This library grew out of a logging client I created for another Haxe project. I could not find an existing haxelib that handled REST client functionality (most likely because Haxe's HTTP library is missing so much) so I threw together my own.
+## Thank-You
+This library started out as a pull-request for [tbrosman/haxe-rest-client](https://github.com/tbrosman/haxe-rest-client), but I wanted it go in a direction beyond what was appropriate for that library. Thanks to tbrosman for the head-start!
 
-I am aware of haxe.web.Dispatch but find it cumbersome for free-form REST calls (a good discussion about this can be found [here](https://groups.google.com/forum/#!topic/haxelang/eQtf--1_tpo)).
-
-## Features
-
-Both synchronous and asynchronous requests are supported (with some restrictions depending on platform, see below).
-
-The interface is designed to be clean and readable as well as symmetric between sync and async requests:
-
-```
-    var result = RestClient.get(
-        "http://localhost:8000/item/1",
-        ["testParam" => "asdf"]);
-    trace(result;
-
-    var result = RestClient.getAsync(
-        "http://localhost:8000/item/1",
-        function(result)
-        {
-            trace(result);
-        },
-        ["testParam" => "asdf"]);
-```
 
 ## Platforms
-This has been tested on Neko, Flash, and CPP (on Android) targets. Flash is the only platform (that I know of) that doesn't support some form of synchronous requests/sockets. For all other platforms Http.customRequest is used.
+This has been tested on then Neko and Flash targets. There are a couple of different options available for dealing with "Accept" headers for content negotiation. One of them or the other is needed in Flash.
 
 If you find any issues using this library with your platform of choice, feel free to open an issue/make a pull request.
 
 ## Limitations
-* Currently only GET and POST are supported (similar to Http.request, which is used in cases where sys is not available).
-
-## Future
-* SSL support
-* More verbs
-* Unit tests for more platforms
+* Currently only GET and POST are supported. But there is a nice `.getJson` method that knows you want JSON.
