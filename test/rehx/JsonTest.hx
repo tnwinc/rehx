@@ -13,7 +13,12 @@ class JsonTest extends BuddySuite
             var c:Client;
 
             before({
-                c = new Client({urlRoot: "http://localhost:3000"});
+                c = new Client({
+                    urlRoot: "http://api.rehx.dev",
+#if flash
+                    parameterStyleContentNegotiation: true
+#end
+                });
             });
 
             it("should make a GET request", function(done) {
@@ -35,4 +40,3 @@ class JsonTest extends BuddySuite
         });
     }
 }
-
