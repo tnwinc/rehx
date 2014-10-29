@@ -22,8 +22,7 @@ app.get('/crossdomain', function(req, res) {
 });
 
 app.get('/hello_world', function (req, res) {
-    console.log('GET');
-    console.log(req.headers)
+    console.log(req.headers.accept)
     res.format({
         text: function () {
             res.end('Hello World');
@@ -38,8 +37,6 @@ app.get('/hello_world', function (req, res) {
 });
 
 app.post('/hello_world', function (req, res) {
-    console.log('POST');
-    console.log(req.headers)
     res.send('Hello World');
 });
 

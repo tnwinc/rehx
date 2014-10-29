@@ -24,9 +24,6 @@ class Client {
         }
 
         if(parameterStyleContentNegotiation && extensionStyleContentNegotiation) throw "Can't use both alternate content negotiation schemes at the same time.";
-#if flash
-        //extensionStyleContentNegotiation = true;
-#end
     }
 
     var urlRoot:String = "";
@@ -82,7 +79,7 @@ class Client {
 
     public function getJson(url:String, parameters:Map<String, String> = null, headers:Map<String, String> = null, onSuccess:RestClientJsonPayload->Void = null, onError:String->Void = null):Promise<RestClientJsonPayload> {
         var deferred = new Deferred<RestClientJsonPayload>();
-        headers = updateHeadersToAccept(headers, 'application/json');
+        headers = updateHeadersToAccept(headers, 'application/json;text/json;text/javascript');
         url = updateUrlToAccept(url, 'json');
 
         var r = buildHttpRequest(
