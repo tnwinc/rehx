@@ -1,10 +1,10 @@
 {
   "name": "rehx",
-  "url": "https://github.com/tnwinc/haxe-rest-client",
+  "url": "https://github.com/tnwinc/rehx",
   "license": "MIT",
   "tags": ["rest"],
   "description": "Another REST-ish client for Haxe. This one gives you instances, promises, and solves some content negotiation problems.",
-  "version": "0.0.1",
+  "version": "0.0.1-alpha",
   "releasenote": "",
   "contributors": ["tbrosman", "brendanjerwin"],
   "dependencies": {
