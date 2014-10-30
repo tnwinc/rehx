@@ -30,3 +30,9 @@ Option                               | Description
 `parameterStyleContentNegotiation`   | Put Accept header values on the query string.
 `extensionStyleContentNegotiation`   | Append a file extension instead of using an Accept header.
 `defaultContentType`                 | The default content type used for `.get` and `.post`. `text/plain` unless specified. 
+
+## Usage
+The request methods all fulfil, both the success callback and the `.then` on the promise, with this structure: `{data:Dynamic|String, statusCode:Int}`.
+The `.getJson` will have a Dynamic for `data`, the others will have a String.
+
+`statusCode` is the status code returned from the server for that request. Note that, currently, even a 500 series status code will call the success callbacks.
