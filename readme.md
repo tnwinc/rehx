@@ -12,3 +12,21 @@ If you find any issues using this library with your platform of choice, feel fre
 
 ## Limitations
 * Currently only GET and POST are supported. But there is a nice `.getJson` method that knows you want JSON.
+
+
+## Configuration
+The constructor accepts a structure for configuration: 
+
+```
+var client = new Client({
+  urlRoot: "http://api.rehx.dev",
+  parameterStyleContentNegotiation: true
+});
+```
+
+Option                               | Description
+-------------------------------------|:-----------
+`urlRoot`                            | Will be prepended to any URLs requested. 
+`parameterStyleContentNegotiation`   | Put Accept header values on the query string.
+`extensionStyleContentNegotiation`   | Append a file extension instead of using an Accept header.
+`defaultContentType`                 | The default content type used for `.get` and `.post`. `text/plain` unless specified. 
