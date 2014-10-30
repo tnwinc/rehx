@@ -6,7 +6,7 @@ This library started out as a pull-request for [tbrosman/haxe-rest-client](https
 
 
 ## Platforms
-This has been tested on then Neko and Flash targets. There are a couple of different options available for dealing with "Accept" headers for content negotiation. One of them or the other is needed in Flash.
+This has been tested on the Neko and Flash targets. There are a couple of different options available for dealing with "Accept" headers for content negotiation. One of them or the other is needed in Flash.
 
 If you find any issues using this library with your platform of choice, feel free to open an issue/make a pull request.
 
