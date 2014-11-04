@@ -5,7 +5,7 @@ Another REST-ish client for Haxe. This one gives you instances, promises, and so
 This library started out as a pull-request for [tbrosman/haxe-rest-client](https://github.com/tbrosman/haxe-rest-client), but I wanted it go in a direction beyond what was appropriate for that library. Thanks to tbrosman for the head-start!
 
 ## Platforms
-This has been unit tested on the Neko and Flash targets. It utilizes HTTP Method Overriding (AKA MEthod Tunneling) on Flash as needed. (eg. when setting custom headers, but using the GET Verb.)
+This has been unit tested on the Neko and Flash targets. It utilizes HTTP Method Overriding (AKA Method Tunneling) on Flash as needed. (eg. when setting custom headers, but using the GET Verb.)
 
 If you find any issues using this library with your platform of choice, feel free to open an issue/make a pull request.
 
