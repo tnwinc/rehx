@@ -11,6 +11,7 @@ If you find any issues using this library with your platform of choice, feel fre
 
 ## Limitations
 * Currently only GET and POST are supported. But there is a nice `.getJson` method that knows you want JSON.
+* Currently only really tested with Flash... Sorry. Let me know if it needs changes for you!
 
 ## X-HTTP-Method-Override
 When a request is made that can't be done on the target platform, such as sending custom headers on a GET request while in Flash, an `X-HTTP-Method-Override` header is sent and the most capable _actual_ method is used. In Flash, this means POST. 
