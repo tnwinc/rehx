@@ -11,7 +11,13 @@ typedef RestClientConfiguration = {
     ?urlRoot:String,
     ?extensionStyleContentNegotiation:Bool,
     ?parameterStyleContentNegotiation:Bool,
+    ?methodTunneling:Bool,
     ?defaultContentType:String
+}
+
+enum Verb {
+    POST;
+    GET;
 }
 
 class Client {
@@ -20,15 +26,18 @@ class Client {
             if(cfg.urlRoot != null) urlRoot = cfg.urlRoot;
             if(cfg.extensionStyleContentNegotiation != null) extensionStyleContentNegotiation = cfg.extensionStyleContentNegotiation;
             if(cfg.parameterStyleContentNegotiation != null) parameterStyleContentNegotiation = cfg.parameterStyleContentNegotiation;
+            if(cfg.methodTunneling != null) methodTunneling = cfg.methodTunneling;
             if(cfg.defaultContentType != null) defaultContentType = cfg.defaultContentType;
         }
 
+        if(methodTunneling && (parameterStyleContentNegotiation || extensionStyleContentNegotiation)) throw "Method Tunneling can not be used with other alternate content negotiation schemese.";
         if(parameterStyleContentNegotiation && extensionStyleContentNegotiation) throw "Can't use both alternate content negotiation schemes at the same time.";
     }
 
     var urlRoot:String = "";
     var extensionStyleContentNegotiation:Bool = false;
     var parameterStyleContentNegotiation:Bool = false;
+    var methodTunneling:Bool = false;
     var defaultContentType:String = 'text/plain';
 
     public var lastStatusCode:Int;
@@ -38,6 +47,15 @@ class Client {
         if (extensionStyleContentNegotiation) return headers;
         if (headers.get('Accept') == null) {
             headers.set('Accept', types);
+        }
+        return headers;
+    }
+
+    private function updateHeadersWithMethodOverride(headers:Map<String, String>, verb:Verb):Map<String, String> {
+        if (headers == null) headers = new Map<String, String>();
+        if (!methodTunneling) return headers;
+        for( header in ["X-HTTP-Method", "X-HTTP-Method-Override", "X-Method-Override", "X-METHOD-OVERRIDE"] ){
+            headers.set(header, verb.getName());
         }
         return headers;
     }
@@ -58,9 +76,19 @@ class Client {
         return parameters;
     }
 
+    private function desiredVerb(verb:Verb):Bool {
+        if (methodTunneling) return true;
+
+        return switch(verb) {
+            case POST : true;
+            case GET : false;
+        }
+    }
+
     public function post(url:String, data:String, parameters:Map<String, String> = null, headers:Map<String, String> = null, onSuccess:RestClientPayload->Void = null, onError:String->Void = null):Promise<RestClientPayload> {
         var deferred = new Deferred<RestClientPayload>();
         headers = updateHeadersToAccept(headers, defaultContentType);
+        headers = updateHeadersWithMethodOverride(headers, POST);
         url = updateUrlToAccept(url, 'text');
 
         var r = buildHttpRequest(
@@ -72,7 +100,7 @@ class Client {
                 onSuccess,
                 onError,
                 makeStringResult);
-        r.request(true);
+        r.request(desiredVerb(POST));
 
         return deferred.promise();
     }
@@ -80,6 +108,7 @@ class Client {
     public function getJson(url:String, parameters:Map<String, String> = null, headers:Map<String, String> = null, onSuccess:RestClientJsonPayload->Void = null, onError:String->Void = null):Promise<RestClientJsonPayload> {
         var deferred = new Deferred<RestClientJsonPayload>();
         headers = updateHeadersToAccept(headers, 'application/json;text/json;text/javascript');
+        headers = updateHeadersWithMethodOverride(headers, GET);
         url = updateUrlToAccept(url, 'json');
 
         var r = buildHttpRequest(
@@ -91,7 +120,7 @@ class Client {
                 onSuccess,
                 onError,
                 makeJsonResult);
-        r.request(false);
+        r.request(desiredVerb(GET));
 
         return deferred.promise();
     }
@@ -99,6 +128,8 @@ class Client {
     public function get(url:String, parameters:Map<String, String> = null, headers:Map<String, String> = null, onSuccess:RestClientPayload->Void = null, onError:String->Void = null):Promise<RestClientPayload> {
         var deferred = new Deferred<RestClientPayload>();
         headers = updateHeadersToAccept(headers, defaultContentType);
+        headers = updateHeadersWithMethodOverride(headers, GET);
+
         url = updateUrlToAccept(url, 'text');
 
         var r = buildHttpRequest(
@@ -110,7 +141,7 @@ class Client {
                 onSuccess,
                 onError,
                 makeStringResult);
-        r.request(false);
+        r.request(desiredVerb(GET));
 
         return deferred.promise();
     }
