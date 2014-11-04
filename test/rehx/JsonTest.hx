@@ -14,10 +14,7 @@ class JsonTest extends BuddySuite
 
             before({
                 c = new Client({
-                    urlRoot: "http://api.rehx.dev",
-#if flash
-                    parameterStyleContentNegotiation: true
-#end
+                    urlRoot: "http://api.rehx.dev"
                 });
             });
 

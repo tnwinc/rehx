@@ -9,9 +9,6 @@ typedef RestClientJsonPayload = {data:Dynamic, statusCode:Int}
 typedef RestClientPayload = {data:String, statusCode:Int}
 typedef RestClientConfiguration = {
     ?urlRoot:String,
-    ?extensionStyleContentNegotiation:Bool,
-    ?parameterStyleContentNegotiation:Bool,
-    ?methodTunneling:Bool,
     ?defaultContentType:String
 }
 
@@ -24,83 +21,38 @@ class Client {
     public function new(cfg:RestClientConfiguration = null) {
         if (cfg != null) {
             if(cfg.urlRoot != null) urlRoot = cfg.urlRoot;
-            if(cfg.extensionStyleContentNegotiation != null) extensionStyleContentNegotiation = cfg.extensionStyleContentNegotiation;
-            if(cfg.parameterStyleContentNegotiation != null) parameterStyleContentNegotiation = cfg.parameterStyleContentNegotiation;
-            if(cfg.methodTunneling != null) methodTunneling = cfg.methodTunneling;
             if(cfg.defaultContentType != null) defaultContentType = cfg.defaultContentType;
         }
-
-        if(methodTunneling && (parameterStyleContentNegotiation || extensionStyleContentNegotiation)) throw "Method Tunneling can not be used with other alternate content negotiation schemese.";
-        if(parameterStyleContentNegotiation && extensionStyleContentNegotiation) throw "Can't use both alternate content negotiation schemes at the same time.";
     }
 
     var urlRoot:String = "";
-    var extensionStyleContentNegotiation:Bool = false;
-    var parameterStyleContentNegotiation:Bool = false;
-    var methodTunneling:Bool = false;
     var defaultContentType:String = 'text/plain';
 
     public var lastStatusCode:Int;
 
     private function updateHeadersToAccept(headers:Map<String, String>, types:String):Map<String, String> {
         if (headers == null) headers = new Map<String, String>();
-        if (extensionStyleContentNegotiation) return headers;
+
         if (headers.get('Accept') == null) {
             headers.set('Accept', types);
         }
         return headers;
     }
 
-    private function updateHeadersWithMethodOverride(headers:Map<String, String>, verb:Verb):Map<String, String> {
-        if (headers == null) headers = new Map<String, String>();
-        if (!methodTunneling) return headers;
-        for( header in ["X-HTTP-Method", "X-HTTP-Method-Override", "X-Method-Override", "X-METHOD-OVERRIDE"] ){
-            headers.set(header, verb.getName());
-        }
-        return headers;
-    }
-
-    private function updateUrlToAccept(url:String, ext:String):String {
-        if (extensionStyleContentNegotiation) url = url + '.$ext';
-        return url;
-    }
-
-    private function updateParametersWithContentNegotiation(parameters:Map<String, String>, headers:Map<String, String>):Map<String, String> {
-        if(!parameterStyleContentNegotiation) return parameters;
-
-        if(parameters == null) parameters = new Map<String, String>();
-
-        var contentType = headers.get("Accept");
-        parameters.set("_accept", contentType);
-
-        return parameters;
-    }
-
-    private function desiredVerb(verb:Verb):Bool {
-        if (methodTunneling) return true;
-
-        return switch(verb) {
-            case POST : true;
-            case GET : false;
-        }
-    }
-
     public function post(url:String, data:String, parameters:Map<String, String> = null, headers:Map<String, String> = null, onSuccess:RestClientPayload->Void = null, onError:String->Void = null):Promise<RestClientPayload> {
         var deferred = new Deferred<RestClientPayload>();
         headers = updateHeadersToAccept(headers, defaultContentType);
-        headers = updateHeadersWithMethodOverride(headers, POST);
-        url = updateUrlToAccept(url, 'text');
 
-        var r = buildHttpRequest(
-                url,
-                deferred,
-                data,
-                parameters,
-                headers,
-                onSuccess,
-                onError,
-                makeStringResult);
-        r.request(desiredVerb(POST));
+        buildHttpRequest(
+            Verb.POST,
+            url,
+            deferred,
+            data,
+            parameters,
+            headers,
+            onSuccess,
+            onError,
+            makeStringResult);
 
         return deferred.promise();
     }
@@ -108,19 +60,17 @@ class Client {
     public function getJson(url:String, parameters:Map<String, String> = null, headers:Map<String, String> = null, onSuccess:RestClientJsonPayload->Void = null, onError:String->Void = null):Promise<RestClientJsonPayload> {
         var deferred = new Deferred<RestClientJsonPayload>();
         headers = updateHeadersToAccept(headers, 'application/json;text/json;text/javascript');
-        headers = updateHeadersWithMethodOverride(headers, GET);
-        url = updateUrlToAccept(url, 'json');
 
-        var r = buildHttpRequest(
-                url,
-                deferred,
-                null,
-                parameters,
-                headers,
-                onSuccess,
-                onError,
-                makeJsonResult);
-        r.request(desiredVerb(GET));
+        buildHttpRequest(
+            Verb.GET,
+            url,
+            deferred,
+            null,
+            parameters,
+            headers,
+            onSuccess,
+            onError,
+            makeJsonResult);
 
         return deferred.promise();
     }
@@ -128,20 +78,17 @@ class Client {
     public function get(url:String, parameters:Map<String, String> = null, headers:Map<String, String> = null, onSuccess:RestClientPayload->Void = null, onError:String->Void = null):Promise<RestClientPayload> {
         var deferred = new Deferred<RestClientPayload>();
         headers = updateHeadersToAccept(headers, defaultContentType);
-        headers = updateHeadersWithMethodOverride(headers, GET);
 
-        url = updateUrlToAccept(url, 'text');
-
-        var r = buildHttpRequest(
-                url,
-                deferred,
-                null,
-                parameters,
-                headers,
-                onSuccess,
-                onError,
-                makeStringResult);
-        r.request(desiredVerb(GET));
+        buildHttpRequest(
+            Verb.GET,
+            url,
+            deferred,
+            null,
+            parameters,
+            headers,
+            onSuccess,
+            onError,
+            makeStringResult);
 
         return deferred.promise();
     }
@@ -154,9 +101,36 @@ class Client {
         return {data: haxe.Json.parse(r), statusCode:lastStatusCode};
     }
 
-    private function buildHttpRequest<TPayloadType>(url:String, deferred:Deferred<TPayloadType>, data:String = null, parameters:Map<String, String> = null, headers:Map<String, String>, onSuccess:TPayloadType->Void = null, onError:String->Void = null, resultMap:String->Dynamic = null):Http {
-        url = urlRoot + url;
+    private function determinePostOrGetFlagAndSetOverrideHeaders(verb:Verb, headers:Map<String, String>):Bool {
+        var isPost = true;
+        var isGet = false;
+        var needsMethodTunneling = false;
+
+#if flash
+        needsMethodTunneling = headers.keys().hasNext();
+#end
+        if (needsMethodTunneling) {
+            for( header in ["X-HTTP-Method", "X-HTTP-Method-Override", "X-Method-Override", "X-METHOD-OVERRIDE"] ){
+                headers.set(header, verb.getName());
+            }
+        }
+
+        if (needsMethodTunneling) return isPost;
+
+        return switch(verb) {
+            case POST   : isPost;
+            case GET    : isGet;
+        }
+    }
+
+    private function buildHttpRequest<TPayloadType>(verb:Verb, url:String, deferred:Deferred<TPayloadType>, data:String = null, parameters:Map<String, String> = null, headers:Map<String, String>, onSuccess:TPayloadType->Void = null, onError:String->Void = null, resultMap:String->Dynamic = null):Void {
+        if (headers == null) headers = new Map<String, String>();
         if (resultMap == null) resultMap = function(s) return s;
+
+        var postOrGetFlag:Bool = determinePostOrGetFlagAndSetOverrideHeaders(verb, headers);
+
+        url = urlRoot + url;
+
         var http = new Http(url);
 #if js
         http.async = true;
@@ -186,7 +160,6 @@ class Client {
                 http.setHeader(key, headers.get(key));
             }
         }
-        parameters = updateParametersWithContentNegotiation(parameters, headers);
         if (parameters != null)
         {
             for (key in parameters.keys())
@@ -199,6 +172,6 @@ class Client {
         // Disable caching
         http.setParameter("_nocache", Std.string(Date.now().getTime()));
 #end
-        return http;
+        return http.request(postOrGetFlag);
     }
 }
