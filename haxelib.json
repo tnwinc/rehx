@@ -4,11 +4,11 @@
   "license": "MIT",
   "tags": ["rest"],
   "description": "Another REST-ish client for Haxe. This one gives you instances, promises, and solves some content negotiation problems.",
-  "version": "0.0.1-alpha",
+  "version": "0.0.2-alpha",
   "releasenote": "",
   "contributors": ["tbrosman", "brendanjerwin"],
   "dependencies": {
-    "promhx" : "1.0.9"
+    "promhx" : "1.0.10"
   },
   "classPath" : "src"
 }
