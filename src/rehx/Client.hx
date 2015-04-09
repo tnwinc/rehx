@@ -20,8 +20,8 @@ enum Verb {
 class Client {
     public function new(cfg:RestClientConfiguration = null) {
         if (cfg != null) {
-            if(cfg.urlRoot != null) urlRoot = cfg.urlRoot;
-            if(cfg.defaultContentType != null) defaultContentType = cfg.defaultContentType;
+            if (cfg.urlRoot != null) urlRoot = cfg.urlRoot;
+            if (cfg.defaultContentType != null) defaultContentType = cfg.defaultContentType;
         }
     }
 
@@ -44,15 +44,15 @@ class Client {
         headers = updateHeadersToAccept(headers, defaultContentType);
 
         buildHttpRequest(
-            Verb.POST,
-            url,
-            deferred,
-            data,
-            parameters,
-            headers,
-            onSuccess,
-            onError,
-            makeStringResult);
+                Verb.POST,
+                url,
+                deferred,
+                data,
+                parameters,
+                headers,
+                onSuccess,
+                onError,
+                makeStringResult);
 
         return deferred.promise();
     }
@@ -62,15 +62,15 @@ class Client {
         headers = updateHeadersToAccept(headers, 'application/json;text/json;text/javascript');
 
         buildHttpRequest(
-            Verb.GET,
-            url,
-            deferred,
-            null,
-            parameters,
-            headers,
-            onSuccess,
-            onError,
-            makeJsonResult);
+                Verb.GET,
+                url,
+                deferred,
+                null,
+                parameters,
+                headers,
+                onSuccess,
+                onError,
+                makeJsonResult);
 
         return deferred.promise();
     }
@@ -80,15 +80,15 @@ class Client {
         headers = updateHeadersToAccept(headers, defaultContentType);
 
         buildHttpRequest(
-            Verb.GET,
-            url,
-            deferred,
-            null,
-            parameters,
-            headers,
-            onSuccess,
-            onError,
-            makeStringResult);
+                Verb.GET,
+                url,
+                deferred,
+                null,
+                parameters,
+                headers,
+                onSuccess,
+                onError,
+                makeStringResult);
 
         return deferred.promise();
     }
@@ -110,7 +110,7 @@ class Client {
         needsMethodTunneling = headers.keys().hasNext();
 #end
         if (needsMethodTunneling) {
-            for( header in ["X-HTTP-Method", "X-HTTP-Method-Override", "X-Method-Override", "X-METHOD-OVERRIDE"] ){
+            for(header in ["X-HTTP-Method", "X-HTTP-Method-Override", "X-Method-Override", "X-METHOD-OVERRIDE"]){
                 headers.set(header, verb.getName());
             }
         }
@@ -124,54 +124,59 @@ class Client {
     }
 
     private function buildHttpRequest<TPayloadType>(verb:Verb, url:String, deferred:Deferred<TPayloadType>, data:String = null, parameters:Map<String, String> = null, headers:Map<String, String>, onSuccess:TPayloadType->Void = null, onError:String->Void = null, resultMap:String->Dynamic = null):Void {
-        if (headers == null) headers = new Map<String, String>();
-        if (resultMap == null) resultMap = function(s) return s;
+        try {
+            if (headers == null) headers = new Map<String, String>();
+            if (resultMap == null) resultMap = function(s) return s;
 
-        var postOrGetFlag:Bool = determinePostOrGetFlagAndSetOverrideHeaders(verb, headers);
+            var postOrGetFlag:Bool = determinePostOrGetFlagAndSetOverrideHeaders(verb, headers);
 
-        url = urlRoot + url;
+            url = urlRoot + url;
 
-        var http = new Http(url);
+            var http = new Http(url);
 #if js
-        http.async = true;
+            http.async = true;
 #end
-        http.onError = function(msg) {
-            trace('onError: $msg');
-            if (onError != null) onError(msg);
-            deferred.throwError(msg);
-        }
-
-        http.onData = function(data) {
-            var r = resultMap(data);
-            if (onSuccess != null) onSuccess(r);
-            deferred.resolve(r);
-        }
-
-        http.onStatus = function(status) {
-            lastStatusCode = status;
-        }
-
-        if (data != null) http.setPostData(data);
-
-        if (headers != null)
-        {
-            for (key in headers.keys())
-            {
-                http.setHeader(key, headers.get(key));
+            http.onError = function(msg) {
+                trace('onError: $msg');
+                if (onError != null) onError(msg);
+                deferred.throwError(msg);
             }
-        }
-        if (parameters != null)
-        {
-            for (key in parameters.keys())
-            {
-                http.setParameter(key, parameters.get(key));
+
+            http.onData = function(data) {
+                try {
+                    var r = resultMap(data);
+                    if (onSuccess != null) onSuccess(r);
+                    deferred.resolve(r);
+                } catch(e:Dynamic) {
+                    deferred.throwError(e);
+                    throw e;
+                }
             }
-        }
+
+            http.onStatus = function(status) {
+                lastStatusCode = status;
+            }
+
+            if (data != null) http.setPostData(data);
+
+            if (headers != null) {
+                for(key in headers.keys()) {
+                    http.setHeader(key, headers.get(key));
+                }
+            }
+            if (parameters != null) {
+                for(key in parameters.keys()) {
+                    http.setParameter(key, parameters.get(key));
+                }
+            }
 
 #if flash
-        // Disable caching
-        http.setParameter("_nocache", Std.string(Date.now().getTime()));
+            // Disable caching
+            http.setParameter("_nocache", Std.string(Date.now().getTime()));
 #end
-        return http.request(postOrGetFlag);
+            http.request(postOrGetFlag);
+        } catch(e:Dynamic) {
+            deferred.throwError(e);
+        }
     }
 }
