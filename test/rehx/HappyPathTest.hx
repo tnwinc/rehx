@@ -11,10 +11,15 @@ class HappyPathTest extends BuddySuite
     {
         describe("Happy Path", {
             var c:Client;
+            var unauthorizedCalled:Bool;
 
             before({
+                unauthorizedCalled = false;
                 c = new Client({
-                    urlRoot: "http://api.rehx.dev"
+                    urlRoot: "http://api.rehx.dev",
+                    unauthorizedHandler: function() {
+                        unauthorizedCalled = true;
+                    }
                 });
             });
 
@@ -38,6 +43,13 @@ class HappyPathTest extends BuddySuite
                 c.post("/hello_world", "boo", null, null, function(r) {
                     r.statusCode.should.be(200);
                     r.data.should.be('Hello World');
+                    done();
+                });
+            });
+
+            it("should call the unathorized handler if unauthorized", function (done) {
+                c.get("/unauthorized", null, null, null, function (r) {
+                    unauthorizedCalled.should.be(true);
                     done();
                 });
             });

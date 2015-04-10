@@ -54,5 +54,10 @@ app.put('/put_here', function (req, res) {
     res.send('placed');
 });
 
+app.get('/unauthorized', function (req, res) {
+    res.statusCode = 401;
+    res.send('Unauthorized');
+});
+
 console.log('Server Started');
 app.listen(3000);

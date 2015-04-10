@@ -9,7 +9,8 @@ typedef RestClientJsonPayload = {data:Dynamic, statusCode:Int}
 typedef RestClientPayload = {data:String, statusCode:Int}
 typedef RestClientConfiguration = {
     ?urlRoot:String,
-    ?defaultContentType:String
+    ?defaultContentType:String,
+    ?unauthorizedHandler:Void->Void
 }
 
 enum Verb {
@@ -22,11 +23,13 @@ class Client {
         if (cfg != null) {
             if (cfg.urlRoot != null) urlRoot = cfg.urlRoot;
             if (cfg.defaultContentType != null) defaultContentType = cfg.defaultContentType;
+            if (cfg.unauthorizedHandler != null) unauthorizedHandler = cfg.unauthorizedHandler;
         }
     }
 
     var urlRoot:String = "";
     var defaultContentType:String = 'text/plain';
+    var unauthorizedHandler:Void->Void;
 
     public var lastStatusCode:Int;
 
@@ -137,7 +140,7 @@ class Client {
             http.async = true;
 #end
             http.onError = function(msg) {
-                trace('onError: $msg');
+                if (unauthorizedHandler != null) unauthorizedHandler();
                 if (onError != null) onError(msg);
                 deferred.throwError(msg);
             }

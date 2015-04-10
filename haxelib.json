@@ -4,7 +4,7 @@
   "license": "MIT",
   "tags": ["rest"],
   "description": "Another REST-ish client for Haxe. This one gives you instances, promises, and solves some content negotiation problems.",
-  "version": "0.0.4-alpha",
+  "version": "0.0.5-alpha",
   "releasenote": "",
   "contributors": ["tbrosman", "brendanjerwin"],
   "dependencies": {
